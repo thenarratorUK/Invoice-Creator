@@ -994,29 +994,29 @@ def step0():
                 st.session_state.client_addr_count = max(1, len(prof.get("client_address_lines") or []))
                 
                 # ---- Diagnostic display of payloads (raw + parsed) ----
-                st.divider()
-                st.subheader("Raw embedded payload text (as found in PDF)")
-                st.text_area(
-                    "Raw payload block",
-                    payload_line,
-                    height=140,
-                    key="raw_payload_preview"
-                )
+                #st.divider()
+                #st.subheader("Raw embedded payload text (as found in PDF)")
+                #st.text_area(
+                #    "Raw payload block",
+                #    payload_line,
+                #    height=140,
+                #    key="raw_payload_preview"
+                #)
 
-                st.subheader("Parsed enc_* key–value pairs")
-                parsed_pairs_preview = "\n".join(f"{k}={v}" for k, v in enc.items())
-                st.text_area(
-                    "Parsed pairs (enc_key=value)",
-                    parsed_pairs_preview,
-                    height=200,
-                    key="parsed_pairs_preview"
-                )
+                #st.subheader("Parsed enc_* key–value pairs")
+                #parsed_pairs_preview = "\n".join(f"{k}={v}" for k, v in enc.items())
+                #st.text_area(
+                #    "Parsed pairs (enc_key=value)",
+                #    parsed_pairs_preview,
+                #    height=200,
+                #    key="parsed_pairs_preview"
+                #)
 
-                with st.expander("Parsed payload as JSON (dict)"):
-                    st.json(enc)
+                #with st.expander("Parsed payload as JSON (dict)"):
+                #    st.json(enc)
 
-                with st.expander("Built profile dict to pre-populate Steps 1–4"):
-                    st.json(prof)
+                #with st.expander("Built profile dict to pre-populate Steps 1–4"):
+                #    st.json(prof)
                 # ---- End diagnostics ----
 
                 # Stage the parsed state; don't navigate yet
@@ -1321,7 +1321,7 @@ def step5():
 # ---- Main ----
 
 def main():
-    st.set_page_config(page_title="Invoice Builder (MVP — Part A+B)", layout="centered")
+    st.set_page_config(page_title="Invoice Builder", layout="centered")
     ensure_session()
 
     # Render access page in isolation
