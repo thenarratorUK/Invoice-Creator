@@ -1,2 +1,6 @@
 streamlit>=1.38
 reportlab>=3.6
+pdfminer.six
+pandas
+python-dateutil
+PyPDF2
