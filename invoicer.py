@@ -32,7 +32,22 @@ try:
 except Exception:
     PdfReader = None
 
-INVOICER_META_TAG = "INVOICER_V2"
+INVOICER_META_TAG = "ENCODED"
+
+# === Simple payload encoder/decoder ===
+def encode_payload(text: str) -> str:
+    """Base64-encode the given text safely for embedding in the PDF."""
+    import base64
+    return base64.b64encode(text.encode("utf-8")).decode("ascii")
+
+def decode_payload(text: str) -> str:
+    """Attempt Base64-decode; return original text if it fails."""
+    import base64, binascii
+    try:
+        return base64.b64decode(text.encode("ascii")).decode("utf-8")
+    except (binascii.Error, UnicodeDecodeError):
+        return text
+# === End helpers ===
 
 # ---- Persistence (autosave keyed by user key) ----
 
@@ -85,6 +100,25 @@ def extract_enc_payload_text_from_pdf(pdf_bytes: bytes) -> str:
     Returns a single '&'-joined string like 'enc_a=...&enc_b=...'.
     """
     raw = extract_text(io.BytesIO(pdf_bytes)) or ""
+
+    # --- Fast-path for tagged Base64 footer ---
+    import re, base64, html as _html
+
+    # Find ENCODED= followed by Base64 (may include whitespace due to PDF wrapping)
+    m = re.search(rf"{re.escape(INVOICER_META_TAG)}\s*=\s*([A-Za-z0-9+/=\s]+)", raw)
+    if m:
+        b64_block = m.group(1)
+        # Remove all whitespace; PDFs often wrap long text
+        compact = re.sub(r"\s+", "", b64_block)
+        try:
+            decoded = base64.b64decode(compact, validate=True).decode("utf-8")
+            # Your footer was built with &amp; separators; normalise to '&'
+            decoded = _html.unescape(decoded).strip()
+            if "enc_" in decoded:
+                return decoded
+        except Exception:
+            pass
+    # --- End fast-path ---
 
     # 1) Unescape HTML entities so '&amp;' becomes '&' before any splitting
     txt = html.unescape(raw)
@@ -844,6 +878,7 @@ def build_pdf_bytes():
     
     # Assemble with &amp; so ReportLab shows a literal '&'
     payload_line = "&amp;".join(f"{k}={_enc_scalar(v)}" for k, v in enc_pairs)
+    payload_line = encode_payload(payload_line)
     
     payload_style = ParagraphStyle(
         "PayloadFooter",
@@ -855,7 +890,7 @@ def build_pdf_bytes():
     )
     
     story.append(Spacer(1, 1*mm))
-    story.append(Paragraph(payload_line, payload_style))
+    story.append(Paragraph(f"{INVOICER_META_TAG}={payload_line}", payload_style)) 
     # === END: machine-readable footer payload ===
 
     doc.build(story, onFirstPage=_on_page, onLaterPages=_on_page)
